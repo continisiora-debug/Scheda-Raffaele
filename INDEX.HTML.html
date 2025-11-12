@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Scheda Massa — 3 Fasi (Minimal Dark)</title>
+<style>
+:root{--bg:#0b0e11;--card:#0f1316;--muted:#9aa3a8;--accent:#66d9ef;--glass:rgba(255,255,255,0.03)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter, sans-serif;background:var(--bg);color:#e6eef2}
+header{padding:16px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:center}
+h1{margin:0;font-size:18px}
+.container{max-width:900px;margin:16px auto;padding:12px}
+.card{background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(2,6,8,0.6)}
+.day-title{font-weight:700;margin:0 0 8px}
+.exercise{display:flex;justify-content:space-between;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:6px;margin-bottom:4px}
+.ex-name{font-weight:600}
+.ex-detail{color:var(--muted)}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px}
+.tab{padding:6px 10px;border-radius:6px;background:var(--glass);color:var(--muted);cursor:pointer;white-space:nowrap}
+.tab.active{background:linear-gradient(90deg,#111417,var(--card));color:#fff;border:1px solid rgba(255,255,255,0.04)}
+</style>
+</head>
+<body>
+<header>
+<h1>Scheda Massa — 3 Fasi</h1>
+</header>
+<div class="container">
+<div class="tabs" id="tabs"></div>
+<div id="dayContent"></div>
+</div>
+<script>
+const phases=[
+  {name:'Fase 1', weeks:[
+    {day:'Lunedì', exercises:['Panca piana','Panca inclinata','Croci','Dip','Pushdown','Chest fly','Pullover','French press']},
+    {day:'Martedì', exercises:['Stacco','Pulldown','Rematore','Curl bilanciere','Hammer curl','Pullover lat','Rematore manubrio','Curl alternato']},
+    {day:'Giovedì', exercises:['Squat','Leg press','Affondi','Leg curl','Calf raises','Plank','Crunch','Hip thrust']},
+    {day:'Venerdì', exercises:['Military press','Alzate laterali','Arnold press','Face pulls','Hanging leg raise','Shrugs','Alzate frontali','Russian twist']}
+  ]},
+  {name:'Fase 2', weeks:[
+    {day:'Lunedì', exercises:['Panca piana pesante','Panca inclinata manubri','Croci cavi','Dip pesante','Pushdown bilanciere','Chest fly macchina','Pullover bilanciere','French press']},
+    {day:'Martedì', exercises:['Stacco pesante','Trazioni','Rematore pesante','Curl bilanciere','Hammer curl pesante','Pullover lat','Rematore manubrio','Curl alternato manubri']},
+    {day:'Giovedì', exercises:['Squat pesante','Leg press avanzata','Affondi pesanti','Leg curl','Calf raises','Plank pesante','Crunch pesi','Hip thrust pesante']},
+    {day:'Venerdì', exercises:['Military press pesante','Alzate laterali pesanti','Arnold press','Face pulls','Hanging leg raise pesante','Shrugs','Alzate frontali','Russian twist pesi']}
+  ]},
+  {name:'Fase 3', weeks:[
+    {day:'Lunedì', exercises:['Panca piana massimale','Panca inclinata manubri pesante','Croci avanzate','Dip massimo','Pushdown bilanciere pesante','Chest fly avanzato','Pullover pesante','French press massimo']},
+    {day:'Martedì', exercises:['Stacco massimale','Trazioni pesanti','Rematore massimo','Curl bilanciere pesante','Hammer curl massimo','Pullover lat pesante','Rematore manubrio pesante','Curl alternato massimo']},
+    {day:'Giovedì', exercises:['Squat massimale','Leg press pesante','Affondi massimo','Leg curl pesante','Calf raises avanzate','Plank massimo','Crunch pesi','Hip thrust massimo']},
+    {day:'Venerdì', exercises:['Military press massimale','Alzate laterali pesanti','Arnold press avanzato','Face pulls pesante','Hanging leg raise massimo','Shrugs pesanti','Alzate frontali pesanti','Russian twist pesante']}
+  ]}
+];
+let currentPhase=0;
+let currentWeek=0;
+function renderTabs(){
+  const tabs=document.getElementById('tabs');
+  tabs.innerHTML='';
+  phases.forEach((p,i)=>{
+    const btn=document.createElement('div');
+    btn.className='tab'+(i===currentPhase?' active':'');
+    btn.textContent=p.name;
+    btn.onclick=()=>{currentPhase=i;currentWeek=0;renderTabs();renderWeek();};
+    tabs.appendChild(btn);
+  });
+}
+function renderWeek(){
+  const content=document.getElementById('dayContent');
+  content.innerHTML='';
+  const week=phases[currentPhase].weeks[currentWeek];
+  const h=document.createElement('h2');
+  h.className='day-title';
+  h.textContent=week.day+' ('+phases[currentPhase].name+')';
+  content.appendChild(h);
+  week.exercises.forEach(ex=>{
+    const div=document.createElement('div');
+    div.className='exercise';
+    const name=document.createElement('div');
+    name.className='ex-name';
+    name.textContent=ex;
+    div.appendChild(name);
+    content.appendChild(div);
+  });
+}
+renderTabs();
+renderWeek();
+</script>
+</body>
+</html>
