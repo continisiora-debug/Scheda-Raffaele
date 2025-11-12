@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Scheda Massa — 4 giorni (Minimal Dark)</title>
+  <style>
+    :root{--bg:#0b0e11;--card:#0f1316;--muted:#9aa3a8;--accent:#66d9ef;--glass:rgba(255,255,255,0.03)}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;background:linear-gradient(180deg,#050607 0%,var(--bg) 100%);color:#e6eef2}
+    header{padding:20px 18px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;gap:12px;align-items:center}
+    h1{font-size:18px;margin:0}
+    .container{max-width:980px;margin:22px auto;padding:18px}
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px}
+    .card{background:linear-gradient(180deg,var(--card),#0d1114);border-radius:12px;padding:16px;border:1px solid rgba(255,255,255,0.03);box-shadow:0 6px 18px rgba(2,6,8,0.6)}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tab{padding:8px 12px;border-radius:8px;cursor:pointer;background:var(--glass);color:var(--muted);font-weight:600}
+    .tab.active{background:linear-gradient(90deg,#111417,var(--card));color:#fff;border:1px solid rgba(255,255,255,0.04)}
+    .day-title{font-size:16px;margin:0 0 8px}
+    .exercise{display:flex;gap:10px;align-items:center;padding:10px;border-radius:8px;background:rgba(255,255,255,0.02);margin-bottom:8px}
+    .exercise .meta{flex:1}
+    .ex-name{font-weight:700}
+    .ex-detail{color:var(--muted);font-size:13px}
+    .controls{display:flex;gap:8px;align-items:center}
+    .btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px 10px;border-radius:8px;color:var(--accent);cursor:pointer}
+    .btn.ghost{border:1px dashed rgba(255,255,255,0.03);color:var(--muted)}
+    .small{font-size:13px;padding:6px 8px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=text], input[type=number], select, textarea{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.03);background:transparent;color:#e6eef2}
+    .progress-section{display:flex;gap:10px;flex-direction:column}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
+    th{color:var(--muted);font-weight:600}
+    .muted{color:var(--muted)}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .flex{display:flex;gap:10px}
+    .right{justify-content:flex-end}
+    .add-ex-row{display:flex;gap:8px}
+    .pill{padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);font-weight:600}
+    @media(max-width:900px){.grid{grid-template-columns:1fr;}.container{padding:12px}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Scheda Massa 4 giorni — Minimal Dark</h1>
+    <div style="margin-left:auto;color:var(--muted);font-size:13px">Livello: Intermedio • Pesi • Locale</div>
+  </header>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card" id="main">
+        <div class="tabs" id="tabs"></div>
+        <div id="dayContent"></div>
+        <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+          <button class="btn" id="addExerciseBtn">+ Aggiungi esercizio</button>
+          <button class="btn ghost" id="resetBtn">Reset scheda (locale)</button>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn ghost" id="exportBtn">Esporta (JSON)</button>
+            <button class="btn" id="importBtn">Importa</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Progressione (salvataggio locale)</h3>
+        <div class="progress-section">
+          <label for="selectExercise">Scegli esercizio</label>
+          <select id="selectExercise"></select>
+          <div class="flex">
+            <input type="number" id="inputSets" placeholder="Set" min="1">
+            <input type="number" id="inputReps" placeholder="Rip" min="1">
+            <input type="number" id="inputWeight" placeholder="Kg" step="0.5">
+            <button class="btn small" id="logBtn">Registra</button>
+          </div>
+
+          <h4 style="margin:8px 0 4px">Registro</h4>
+          <div style="max-height:320px;overflow:auto">
+            <table id="logTable"><thead><tr><th>Data</th><th>Esercizio</th><th>Set</th><th>Rip</th><th>Kg</th><th></th></tr></thead><tbody></tbody></table>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px">
+            <button class="btn ghost" id="clearLogBtn">Pulisci registro</button>
+            <button class="btn" id="exportLogBtn">Esporta Log</button>
+            <button class="btn ghost" id="importLogBtn">Importa Log</button>
+          </div>
+        </div>
+        <footer>Salvataggio: <span class="pill">localStorage</span></footer>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Default plan (split classica): lun petto/tric, mar dorso/bic, gio gambe/add, ven spalle/core
+    const defaultPlan = {
+      days: [
+        {id:'lun', name:'Lunedì — Petto / Tricipiti', exercises:[
+          {name:'Panca piana', sets:4, reps:'6-8', note:'Progressione carico'},
+          {name:'Panca inclinata con manubri', sets:3, reps:'8-10'},
+          {name:'Croci con manubri', sets:3, reps:'10-12'},
+          {name:'Dip alle parallele', sets:3, reps:'6-10'},
+          {name:'Pushdown tricipiti', sets:3, reps:'8-12'}
+        ]},
+        {id:'mar', name:'Martedì — Dorso / Bicipiti', exercises:[
+          {name:'Stacco da terra', sets:3, reps:'4-6', note:'Pesante, tecnica'},
+          {name:'Pulldown / Trazioni', sets:4, reps:'6-10'},
+          {name:'Rematore con bilanciere', sets:4, reps:'6-8'},
+          {name:'Curl bilanciere', sets:3, reps:'8-10'},
+          {name:'Hammer curl', sets:3, reps:'8-12'}
+        ]},
+        {id:'gio', name:'Giovedì — Gambe / Addome', exercises:[
+          {name:'Squat', sets:4, reps:'6-8'},
+          {name:'Leg press', sets:3, reps:'8-12'},
+          {name:'Affondi con manubri', sets:3, reps:'8-12'},
+          {name:'Leg curl', sets:3, reps:'10-12'},
+          {name:'Calf raises', sets:4, reps:'12-15'},
+          {name:'Plank', sets:3, reps:'45s'}
+        ]},
+        {id:'ven', name:'Venerdì — Spalle / Core', exercises:[
+          {name:'Military press', sets:4, reps:'6-8'},
+          {name:'Alzate laterali', sets:3, reps:'10-12'},
+          {name:'Arnold press', sets:3, reps:'8-10'},
+          {name:'Face pulls', sets:3, reps:'12-15'},
+          {name:'Hanging leg raise', sets:3, reps:'10-15'}
+        ]}
+      ]
+    };
+
+    // --- Local storage keys
+    const PLAN_KEY = 'scheda_massa_plan_v1';
+    const LOG_KEY = 'scheda_massa_log_v1';
+
+    // --- Utilities
+    const $ = sel=>document.querySelector(sel);
+    const $$ = sel=>Array.from(document.querySelectorAll(sel));
+
+    let plan = loadPlan();
+    let log = loadLog();
+    let currentDay = plan.days[0].id;
+
+    function loadPlan(){
+      try{const raw=localStorage.getItem(PLAN_KEY);return raw?JSON.parse(raw):JSON.parse(JSON.stringify(defaultPlan));}
+      catch(e){console.error(e);return JSON.parse(JSON.stringify(defaultPlan));}
+    }
+    function savePlan(){localStorage.setItem(PLAN_KEY,JSON.stringify(plan));renderTabs();renderDay();populateExerciseSelect();}
+    function loadLog(){try{const raw=localStorage.getItem(LOG_KEY);return raw?JSON.parse(raw):[];}catch(e){return []}}
+    function saveLog(){localStorage.setItem(LOG_KEY,JSON.stringify(log));renderLogTable();}
+
+    // --- Rendering
+    function renderTabs(){
+      const tabs = $('#tabs');tabs.innerHTML='';
+      plan.days.forEach(d=>{
+        const btn=document.createElement('div');btn.className='tab'+(d.id===currentDay?' active':'');btn.textContent=d.name;btn.onclick=()=>{currentDay=d.id;renderTabs();renderDay()};tabs.appendChild(btn);
+      })
+    }
+
+    function renderDay(){
+      const day = plan.days.find(d=>d.id===currentDay);
+      const c = $('#dayContent');c.innerHTML='';
+      const h = document.createElement('h2');h.className='day-title';h.textContent=day.name;c.appendChild(h);
+
+      day.exercises.forEach((ex, idx)=>{
+        const el=document.createElement('div');el.className='exercise';
+        const meta=document.createElement('div');meta.className='meta';
+        const title=document.createElement('div');title.className='ex-name';title.textContent=ex.name;meta.appendChild(title);
+        const det=document.createElement('div');det.className='ex-detail';det.textContent=ex.sets+" x "+ex.reps+(ex.note?(' • '+ex.note):'');meta.appendChild(det);
+        el.appendChild(meta);
+
+        const controls=document.createElement('div');controls.className='controls';
+        const addProgressBtn=document.createElement('button');addProgressBtn.className='btn small';addProgressBtn.textContent='Registra';addProgressBtn.onclick=()=>{
+          $('#selectExercise').value=ex.name;$('#inputSets').value=ex.sets||'';$('#inputReps').value=(typeof ex.reps==='number'?ex.reps:ex.reps);$('#inputWeight').focus();
+        };
+        const editBtn=document.createElement('button');editBtn.className='btn ghost small';editBtn.textContent='Modifica';editBtn.onclick=()=>openEditModal(day.id, idx);
+        const delBtn=document.createElement('button');delBtn.className='btn ghost small';delBtn.textContent='Elimina';delBtn.onclick=()=>{if(confirm('Eliminare esercizio?')){day.exercises.splice(idx,1);savePlan()}};
+        controls.appendChild(addProgressBtn);controls.appendChild(editBtn);controls.appendChild(delBtn);
+        el.appendChild(controls);
+
+        c.appendChild(el);
+      });
+
+      // add small add form under day
+      const addRow=document.createElement('div');addRow.className='add-ex-row';addRow.style.marginTop='12px';
+      addRow.innerHTML=`<input id='newExName' placeholder='Nome esercizio' type='text'><input id='newExSets' type='number' placeholder='Set' min='1' style='width:80px'><input id='newExReps' placeholder='Rip' style='width:120px'><button id='saveNewEx' class='btn'>Aggiungi</button>`;
+      c.appendChild(addRow);
+      $('#saveNewEx').onclick=()=>{
+        const name=$('#newExName').value.trim();if(!name){alert('Inserisci nome esercizio');return}
+        const sets=parseInt($('#newExSets').value)||3;const reps=$('#newExReps').value||'8-10';day.exercises.push({name,sets,reps});savePlan();$('#newExName').value='';$('#newExSets').value='';$('#newExReps').value='';
+      }
+    }
+
+    // --- Edit modal (simple prompt-based)
+    function openEditModal(dayId, exIdx){
+      const day = plan.days.find(d=>d.id===dayId);const ex = day.exercises[exIdx];
+      const newName = prompt('Nome esercizio', ex.name); if(newName===null) return; ex.name=newName.trim()||ex.name;
+      const newSets = prompt('Set', ex.sets); if(newSets!==null) ex.sets = parseInt(newSets)||ex.sets;
+      const newReps = prompt('Ripetizioni', ex.reps); if(newReps!==null) ex.reps = newReps||ex.reps;
+      const newNote = prompt('Note (facoltative)', ex.note||''); if(newNote!==null) ex.note = newNote||'';
+      savePlan();
+    }
+
+    // --- Progression select and log
+    function populateExerciseSelect(){
+      const sel = $('#selectExercise');sel.innerHTML='';
+      const all = plan.days.flatMap(d=>d.exercises.map(e=>e.name));
+      const uniq = Array.from(new Set(all));
+      uniq.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=n;sel.appendChild(o)});
+    }
+
+    function renderLogTable(){
+      const tbody = document.querySelector('#logTable tbody');tbody.innerHTML='';
+      log.slice().reverse().forEach((r,idx)=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${new Date(r.date).toLocaleString()}</td><td>${r.exercise}</td><td>${r.sets||''}</td><td>${r.reps||''}</td><td>${r.weight||''}</td><td><button data-i='${log.length-1-idx}' class='btn ghost small deleteLog'>X</button></td>`;
+        tbody.appendChild(tr);
+      });
+      $$('.deleteLog').forEach(b=>b.onclick=(e)=>{const i=parseInt(e.target.dataset.i);if(confirm('Eliminare voce?')){log.splice(i,1);saveLog()}});
+    }
+
+    // --- Controls
+    $('#addExerciseBtn').onclick=()=>{
+      const name = prompt('Nome esercizio'); if(!name) return; const sets = parseInt(prompt('Set','3'))||3; const reps = prompt('Rip','8-12')||'8-12';
+      const day = plan.days.find(d=>d.id===currentDay);day.exercises.push({name,sets,reps});savePlan();
+    }
+
+    $('#resetBtn').onclick=()=>{if(confirm('Ripristinare scheda di default (solo locale)?')){localStorage.removeItem(PLAN_KEY);plan=loadPlan();savePlan();}}
+
+    $('#exportBtn').onclick=()=>{const data = JSON.stringify(plan,null,2);downloadFile('scheda_massa_plan.json',data)}
+    $('#importBtn').onclick=()=>{const txt = prompt('Incolla JSON della scheda (sovrascrive locale)'); if(!txt) return; try{plan=JSON.parse(txt);savePlan();alert('Scheda importata');}catch(e){alert('JSON non valido')}}
+
+    $('#logBtn').onclick=()=>{
+      const ex = $('#selectExercise').value; if(!ex){alert('Seleziona esercizio');return}
+      const sets = parseInt($('#inputSets').value)||null; const reps = $('#inputReps').value||null; const weight = $('#inputWeight').value||null;
+      log.push({date:new Date().toISOString(),exercise:ex,sets, reps, weight}); saveLog(); $('#inputSets').value='';$('#inputReps').value='';$('#inputWeight').value='';
+    }
+    $('#clearLogBtn').onclick=()=>{if(confirm('Svuotare il registro?')){log=[];saveLog()}}
+    $('#exportLogBtn').onclick=()=>{downloadFile('scheda_massa_log.json',JSON.stringify(log,null,2))}
+    $('#importLogBtn').onclick=()=>{const txt = prompt('Incolla JSON del registro (aggiunge le voci)'); if(!txt) return; try{const imported = JSON.parse(txt); if(Array.isArray(imported)){log = log.concat(imported); saveLog(); alert('Log importato')} else alert('Formato invalido')}catch(e){alert('JSON non valido')}}
+
+    function downloadFile(name,content){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([content],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();}
+
+    // --- Init
+    renderTabs();renderDay();populateExerciseSelect();renderLogTable();
+
+    // autosave on beforeunload
+    window.addEventListener('beforeunload', ()=>{savePlan();saveLog()});
+  </script>
+</body>
+</html>
